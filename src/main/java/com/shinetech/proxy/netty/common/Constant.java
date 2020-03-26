@@ -20,33 +20,13 @@ public interface Constant {
     String SERIAL_KEY = "serialKey";
 
 
-    String RISK_EVENT_ID = "risk.event.id";
 
 
-
-
-    String ZOOKEEPER_ADDRESS = "zookeeper.address";
-    String SPOUT_NETTY_SERVER="/spout_netty_path";
+    String ZOOKEEPER_ADDRESS = "192.168.0.90:24002,192.168.0.91:24002,192.168.0.92:24002";
+//    String ZOOKEEPER_ADDRESS = "zookeeper.address";
+    String FLINK_NETTY_SERVER ="/flink_netty_path";
     String ZK_PROXY_CONFIG_PATH="/zk_proxy_config_path";
 
-
-
-    String ASSEMBLE_JSON_ALERT = "alert";
-    String JSON_FINAL_RESULT = "finalResult";
-
-
-
-    String MYSQL_URL = "mysql.url";
-    String MYSQL_USER = "mysql.user";
-    String MYSQL_PASS = "mysql.password";
-
-
-
-    String MYSQL_MGR_URL = "mysql.mgr.url";
-    String MYSQL_MGR_USER = "mysql.mgr.user";
-    String MYSQL_MGR_PASS = "mysql.mgr.password";
-
-    String  NOTICE_SERVER = "notice.server";
 
 
 

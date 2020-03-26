@@ -56,8 +56,9 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter implements 
 
     public LocalClientHandler(LocalClient client) {
         this.client = client;
-        Properties properties = PropertyUtils.getInstance();
-        this.zkAddress = (String) properties.get(Constant.ZOOKEEPER_ADDRESS);
+//        Properties properties = PropertyUtils.getInstance();
+//        this.zkAddress = (String) properties.get(Constant.ZOOKEEPER_ADDRESS);
+        this.zkAddress = Constant.ZOOKEEPER_ADDRESS;
         this.responseCache = RteClientResponseCache.newBuild();
 
         try {
@@ -101,7 +102,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter implements 
 
     public void initClientPool() {
         // 带有事件监听，创建或者删除下一层节点，都会被通知到
-        List<String> oldList = zkClient.listServices(Constant.SPOUT_NETTY_SERVER, true);
+        List<String> oldList = zkClient.listServices(Constant.FLINK_NETTY_SERVER, true);
 
         if (oldList != null && !oldList.isEmpty()) {
             logger.info("flink source netty server register info: " + oldList);
@@ -139,14 +140,14 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter implements 
 
 
         } else {
-            logger.error("storm netty spout server is null in zk: " + zkAddress + " , path: " + Constant.SPOUT_NETTY_SERVER);
+            logger.error("storm netty spout server is null in zk: " + zkAddress + " , path: " + Constant.FLINK_NETTY_SERVER);
         }
     }
 
     @Override
     public void process(WatchedEvent event) {
         String path = event.getPath();
-        logger.info("zookeeper path has changed" + path);
+        logger.info("zookeeper path has changed: " + path);
 
         if (Constant.ZK_PROXY_CONFIG_PATH.equalsIgnoreCase(path)) {
             initClientPool();

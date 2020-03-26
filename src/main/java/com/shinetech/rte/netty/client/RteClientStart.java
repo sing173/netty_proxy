@@ -21,10 +21,6 @@ public class RteClientStart {
     private static final Logger logger = LoggerFactory.getLogger(RteClientStart.class);
 
 
-
-
-
-
     public static RteClient buildClient(String host, int port, int clientThread, int heartIntervalMs, RteClientResponseCache cache) {
 
         RteClient client = RteClient.build(host, port, clientThread, heartIntervalMs);
