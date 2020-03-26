@@ -1,8 +1,10 @@
 package com.shinetech.rte.netty.client;
 
 import com.alibaba.fastjson.JSONObject;
+import com.shinetech.proxy.netty.common.Constant;
 import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.google.common.collect.Maps;
+import com.shinetech.proxy.netty.message.Message;
 import io.netty.channel.ChannelFuture;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
@@ -57,7 +59,8 @@ public class RteClientStart {
 
         Map<String, String> headers = Maps.newHashMap();
         headers.put("serialKey", serialKey);
-        ChannelFuture future = client.sendData(jsonObject.toJSONString(), headers);
+
+        ChannelFuture future = client.sendData(new Message(), Constant.DECISION_REQUEST);
         System.out.println(future);
 
         String response = responseCache.getResult(serialKey, 10000);
