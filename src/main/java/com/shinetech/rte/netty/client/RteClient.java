@@ -2,24 +2,19 @@ package com.shinetech.rte.netty.client;
 
 
 
-import com.alibaba.fastjson.JSONObject;
 import com.shinetech.proxy.netty.common.HttpUtils;
 import com.shinetech.proxy.netty.message.Message;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.buffer.Unpooled;
 import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
-import io.netty.handler.timeout.IdleStateHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 /**

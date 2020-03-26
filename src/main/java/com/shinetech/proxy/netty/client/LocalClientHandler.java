@@ -1,7 +1,6 @@
 package com.shinetech.proxy.netty.client;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.shinetech.common.utils.PropertyUtils;
 import com.shinetech.common.utils.ZKClient;
 import com.shinetech.proxy.netty.common.Constant;
@@ -28,7 +27,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -227,11 +225,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter implements 
                 Message message = JSON.parseObject(jsonStr, Message.class);
 
                 if (Constant.DECISION_REQUEST.equals(message.getHeader().getPath())) {
-                    sendResponse(ctx, message);
-
-
-                } else if(Constant.DECISION_RESPONSE.equals(message.getHeader().getPath())){
-
+                    getDecisionResponseSync(ctx, message);
 
 
                 }
@@ -249,7 +243,12 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter implements 
     }
 
 
-    private void sendResponse(ChannelHandlerContext ctx, Message message) {
+    /**
+     * 下发决策请求并同步获取结果
+     * @param ctx
+     * @param message
+     */
+    private void getDecisionResponseSync(ChannelHandlerContext ctx, Message message) {
         try {
             // 生成随机的序列
             String serialKey = RandomStringUtils.randomAlphabetic(10);
