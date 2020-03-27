@@ -111,7 +111,6 @@ public class LocalClient {
         //连接server
         doConnect();
 
-
         return this;
     }
 
@@ -128,7 +127,7 @@ public class LocalClient {
             public void operationComplete(ChannelFuture futureListener) throws Exception {
                 if (futureListener.isSuccess()) {
                     channel = futureListener.channel();
-                    logger.info("连接服务端成功.........."+channel);
+                    logger.info("连接本地服务端成功.........."+channel);
                     check();
                     //链接成功后发送一条空消息，服务端根据这个注册本地客户端
                     DefaultFullHttpRequest req = HttpUtils.request(new Message(), Constant.LOCAL_CLIENT_CONNENT);
@@ -136,7 +135,7 @@ public class LocalClient {
                     logger.info("netty client connection, host: {}, port: {}", host, port);
 
                 } else {
-                    logger.error("连接服务端失败..........");
+                    logger.error("连接本地服务端失败..........");
 
                     futureListener.channel().eventLoop().schedule(new Runnable() {
                         //一次性操作

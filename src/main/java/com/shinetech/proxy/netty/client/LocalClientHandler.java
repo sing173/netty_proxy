@@ -164,6 +164,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
             e.printStackTrace();
         } catch (URISyntaxException e) {
             e.printStackTrace();
+
         }
     }
 

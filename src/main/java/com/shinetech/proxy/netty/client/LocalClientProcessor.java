@@ -45,12 +45,7 @@ public class LocalClientProcessor implements Watcher {
             this.zkAddress = Constant.ZOOKEEPER_ADDRESS;
             this.zkClient = new ZKClient(zkAddress, this);
 
-            //不存在则新建, 这个目录必须存在
-            if (!zkClient.exist(Constant.ZK_PROXY_CONFIG_PATH)) {
-                zkClient.registerService(Constant.ZK_PROXY_CONFIG_PATH, "0");
-                logger.info("create zk address：" + Constant.ZK_PROXY_CONFIG_PATH);
-            }
-
+            initClientPool();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -85,7 +80,6 @@ public class LocalClientProcessor implements Watcher {
     public void initClientPool() {
         // 带有事件监听，创建或者删除下一层节点，都会被通知到
         List<String> oldList = zkClient.listServices(Constant.FLINK_NETTY_SERVER, true);
-
         if (oldList != null && !oldList.isEmpty()) {
             logger.info("flink source netty server register info: " + oldList);
 
@@ -132,7 +126,7 @@ public class LocalClientProcessor implements Watcher {
         String path = event.getPath();
         logger.info("zookeeper path has changed: " + path);
 
-        if (Constant.ZK_PROXY_CONFIG_PATH.equalsIgnoreCase(path)) {
+        if (Constant.FLINK_NETTY_SERVER.equalsIgnoreCase(path)) {
             initClientPool();
         }
     }

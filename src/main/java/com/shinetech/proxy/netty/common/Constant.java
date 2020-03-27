@@ -22,7 +22,9 @@ public interface Constant {
 
 
 
-    String ZOOKEEPER_ADDRESS = "192.168.0.90:24002,192.168.0.91:24002,192.168.0.92:24002";
+//    String ZOOKEEPER_ADDRESS = "192.168.0.90:24002,192.168.0.91:24002,192.168.0.92:24002";
+    String ZOOKEEPER_ADDRESS = "192.168.0.84:2181,192.168.0.85:2181,192.168.0.86:2181";
+
 //    String ZOOKEEPER_ADDRESS = "zookeeper.address";
     String FLINK_NETTY_SERVER ="/flink_netty_path";
     String ZK_PROXY_CONFIG_PATH="/zk_proxy_config_path";
