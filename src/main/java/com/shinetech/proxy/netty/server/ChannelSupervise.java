@@ -47,7 +47,7 @@ public class ChannelSupervise {
         GlobalGroup.remove(channel);
         LocalChannelMap.remove(channel.id().asShortText());
         ChannelMap.remove(channel.id().asShortText());
-        //TODO 删除key
+        localChannelKeyIndex.removeIf(s -> s.equals(channel.id().asShortText()));
     }
 
 

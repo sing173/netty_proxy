@@ -37,7 +37,7 @@ public class RteClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        logger.error("与rte服务端断开连接,尝试重连....................");
+        logger.error("disconnect rte server,try again....................");
         client.doConnect();  //重新连接服务器
     }
 

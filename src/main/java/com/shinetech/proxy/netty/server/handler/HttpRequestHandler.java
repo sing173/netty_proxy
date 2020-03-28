@@ -65,6 +65,8 @@ public class HttpRequestHandler extends ChannelInboundHandlerAdapter {
                     if(Constant.LOCAL_CLIENT_CONNENT.equals(uri)) {
                         logger.debug("new local client connect："+ctx.channel());
                         ChannelSupervise.addLocalChannel(ctx.channel());
+                        //删除channelActive加入的连接，避免重复
+                        ChannelSupervise.ChannelMap.remove(ctx.channel().id().asShortText());
                     } else {
                         //其它请求通过分发器处理
                         dispatcher.dispatch(request, ctx);

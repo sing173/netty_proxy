@@ -17,13 +17,14 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
 /**
- *
+ * 根据zk注册的服务地址创建Rte客户端
+ * 监听服务地址变更
  * @author luomingxing
  * @date 2020/3/26
  */
-public class LocalClientProcessor implements Watcher {
+public class LocalClientZkWatcher implements Watcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalClientProcessor.class);
+    private static final Logger logger = LoggerFactory.getLogger(LocalClientZkWatcher.class);
 
     /**
      * 链接决策引擎的客户端集合
@@ -35,9 +36,8 @@ public class LocalClientProcessor implements Watcher {
     private ZKClient zkClient;
 
 
-    public LocalClientProcessor(RteClientResponseCache responseCache) {
+    public LocalClientZkWatcher(RteClientResponseCache responseCache) {
         try {
-
 //            Properties properties = PropertyUtils.getInstance();
 //            this.zkAddress = (String) properties.get(Constant.ZOOKEEPER_ADDRESS);
 
@@ -46,7 +46,6 @@ public class LocalClientProcessor implements Watcher {
             this.zkClient = new ZKClient(zkAddress, this);
 
             initClientPool();
-
         } catch (IOException e) {
             e.printStackTrace();
             logger.error("Zookeeper init error：" + e.getMessage());
@@ -60,7 +59,7 @@ public class LocalClientProcessor implements Watcher {
                     logger.debug("check zookeeper Client  connection ......");
                     // 如果zk连接不上，重新初始化zk
                     if (!zkClient.isAvailable()) {
-                        if (zkClient.reconnect(LocalClientProcessor.this)) {
+                        if (zkClient.reconnect(LocalClientZkWatcher.this)) {
                             initClientPool();
                         }
                     }
@@ -116,7 +115,7 @@ public class LocalClientProcessor implements Watcher {
 
 
         } else {
-            logger.error("storm netty spout server is null in zk: " + zkAddress + " , path: " + Constant.FLINK_NETTY_SERVER);
+            logger.error("flink netty server is null in zk: " + zkAddress + " , path: " + Constant.FLINK_NETTY_SERVER);
         }
     }
 

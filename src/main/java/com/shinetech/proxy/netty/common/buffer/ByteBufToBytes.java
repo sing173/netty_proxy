@@ -3,6 +3,7 @@ package com.shinetech.proxy.netty.common.buffer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 
+@Deprecated
 public class ByteBufToBytes {
 
     private ByteBuf temp;

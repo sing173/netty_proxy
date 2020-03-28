@@ -22,7 +22,6 @@ public class DecisionRequestProcessor implements IProcessor {
 
     private static final Logger logger = LoggerFactory.getLogger(DecisionRequestProcessor.class);
 
-
     public DecisionRequestProcessor() {
 
     }

@@ -13,8 +13,7 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 /**
- *
- *
+ * 测试连接rte服务端用
  */
 public class RteClientStart {
 
@@ -37,9 +36,10 @@ public class RteClientStart {
 
     }
 
+
     public static void main(String[] args) {
 
-
+        //测试用
         RteClientStart starter = new RteClientStart();
         RteClientResponseCache responseCache = RteClientResponseCache.newBuild();
         RteClient client =  RteClientStart.buildClient("127.0.0.1", 12900, 20, 15000, responseCache);

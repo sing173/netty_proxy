@@ -4,7 +4,9 @@ import com.alibaba.fastjson.JSON;
 import com.shinetech.proxy.netty.common.Constant;
 import com.shinetech.proxy.netty.common.HttpUtils;
 import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
+import com.shinetech.proxy.netty.message.DecisionMessageBody;
 import com.shinetech.proxy.netty.message.Message;
+import com.shinetech.proxy.netty.message.MessageHeader;
 import com.shinetech.rte.netty.client.RteClient;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -26,10 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 
 public class LocalClientHandler extends ChannelInboundHandlerAdapter {
-
-
     private static final Logger logger = LoggerFactory.getLogger(LocalClientHandler.class);
-
 
     private AtomicInteger roundRobin = new AtomicInteger(0);
     private static final int MAX_VALUE = 100000;
@@ -37,13 +36,13 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
 
     private LocalClient client;
     private RteClientResponseCache responseCache;
-    private LocalClientProcessor processor;
+    private LocalClientZkWatcher processor;
 
 
     public LocalClientHandler(LocalClient client) {
         this.client = client;
         this.responseCache = RteClientResponseCache.newBuild();
-        this.processor = new LocalClientProcessor(this.responseCache);
+        this.processor = new LocalClientZkWatcher(this.responseCache);
 
     }
 
@@ -100,14 +99,6 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
         return new Message();
     }
 
-
-    /**
-     * 从 ByteBuf 里面根据头部的消息类型解析出 Message
-     *
-     * @param ctx
-     * @param buf
-     * @throws Exception
-     */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.debug("localClient Read:" + msg);
@@ -136,7 +127,6 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
 
     }
 
-
     /**
      * 下发决策请求并同步获取结果
      * @param ctx
@@ -155,10 +145,13 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
             rteClient.sendData(message, Constant.DECISION_REQUEST);
 
             //阻塞等待返回....
-            String result = responseCache.getResult(serialKey, 50);
-            Message messageResponse = JSON.parseObject(result, Message.class);
+            String result = responseCache.getResult(serialKey, 100);
+            Message resultMsg = new Message(new MessageHeader(), new DecisionMessageBody());
+            resultMsg.getHeader().setPath(Constant.DECISION_RESPONSE);
+            resultMsg.getHeader().setRequestChannelId(message.getHeader().getRequestChannelId());
+//            Message messageResponse = JSON.parseObject(result, Message.class);
 
-            ctx.writeAndFlush(HttpUtils.request(messageResponse, Constant.DECISION_RESPONSE));
+            ctx.writeAndFlush(HttpUtils.request(resultMsg, Constant.DECISION_RESPONSE));
 
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();

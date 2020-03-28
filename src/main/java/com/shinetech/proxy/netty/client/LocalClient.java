@@ -16,12 +16,8 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.TimeUnit;
 
 /**
- * 简易的netty客户端，负责与服务端进行交互
- * <p>
- * 1 定时发送心跳
- * <p>
- * <p>
- * 2 接收服务端发送的事件流，处理事件流，返回结果
+ * 简易的netty客户端，负责与本地服务端进行交互
+ * 负责管理rte客户端，通过rte客户端请求决策
  */
 public class LocalClient {
 
@@ -127,7 +123,7 @@ public class LocalClient {
             public void operationComplete(ChannelFuture futureListener) throws Exception {
                 if (futureListener.isSuccess()) {
                     channel = futureListener.channel();
-                    logger.info("连接本地服务端成功.........."+channel);
+                    logger.info("connect local server success.........."+channel);
                     check();
                     //链接成功后发送一条空消息，服务端根据这个注册本地客户端
                     DefaultFullHttpRequest req = HttpUtils.request(new Message(), Constant.LOCAL_CLIENT_CONNENT);
@@ -135,7 +131,7 @@ public class LocalClient {
                     logger.info("netty client connection, host: {}, port: {}", host, port);
 
                 } else {
-                    logger.error("连接本地服务端失败..........");
+                    logger.error("connect local server fail..........");
 
                     futureListener.channel().eventLoop().schedule(new Runnable() {
                         //一次性操作
