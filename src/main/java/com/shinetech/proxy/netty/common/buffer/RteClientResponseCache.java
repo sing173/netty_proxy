@@ -19,7 +19,7 @@ public class RteClientResponseCache implements Serializable {
 
     private static final Logger logger = LoggerFactory.getLogger(RteClientResponseCache.class);
 
-    private final ConcurrentHashMap<String, SettableFuture<String>> cache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, SettableFuture<Object>> cache = new ConcurrentHashMap<>();
 
 
     private RteClientResponseCache() {
@@ -40,9 +40,9 @@ public class RteClientResponseCache implements Serializable {
 
 
     // 把结果放到缓存
-    public void putResult(String serialKey, String body) {
+    public void putResult(String serialKey, Object body) {
 
-        SettableFuture<String> future = cache.get(serialKey);
+        SettableFuture<Object> future = cache.get(serialKey);
         if (future == null) {
             logger.error("serialkey cache is null, key: " + serialKey + ", body: " + body + " cachesize: " + cache.size());
         } else {
@@ -65,14 +65,14 @@ public class RteClientResponseCache implements Serializable {
      * @param timeout   超时时间,毫秒
      * @return
      */
-    public String getResult(String serialKey, long timeout) {
-        SettableFuture<String> future;
+    public Object getResult(String serialKey, long timeout) {
+        SettableFuture<Object> future;
         try {
             future = cache.get(serialKey);
             if (future == null) {
                 logger.error("serialkey in the memory is null: " + serialKey);
             } else {
-                String resp = future.get(timeout, TimeUnit.MILLISECONDS);
+                Object resp = future.get(timeout, TimeUnit.MILLISECONDS);
                 cache.remove(serialKey);
                 return resp;
             }

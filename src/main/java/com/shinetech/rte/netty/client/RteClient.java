@@ -3,6 +3,7 @@ package com.shinetech.rte.netty.client;
 
 
 import com.shinetech.proxy.netty.common.HttpUtils;
+import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.shinetech.proxy.netty.message.Message;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.*;
@@ -31,12 +32,14 @@ public class RteClient {
     private int heartIntervalMs = 15000;
     private String host;
     private int port;
+    public RteClientResponseCache responseCache;
 
-    private RteClient(String host, int port, int clientThread, int heartIntervalMs) {
+    private RteClient(String host, int port, int clientThread, int heartIntervalMs, RteClientResponseCache responseCache) {
         this.host = host;
         this.port = port;
         this.clientThread = clientThread;
         this.heartIntervalMs = heartIntervalMs;
+        this.responseCache = responseCache;
     }
 
     /**
@@ -46,8 +49,8 @@ public class RteClient {
      * @param port 端口号
      * @return
      */
-    public static RteClient build(String host, int port, int clientThread, int heartIntervalMs) {
-        return new RteClient(host, port, clientThread, heartIntervalMs);
+    public static RteClient build(String host, int port, int clientThread, int heartIntervalMs, RteClientResponseCache cache) {
+        return new RteClient(host, port, clientThread, heartIntervalMs, cache);
     }
 
     public void check() {
@@ -129,11 +132,9 @@ public class RteClient {
      */
     public ChannelFuture sendData(final Message message, String uri) {
         try {
-            DefaultFullHttpRequest req = HttpUtils.request(message, this.host + ":" + this.port + uri);
+            DefaultFullHttpRequest req = HttpUtils.request(message, uri);
             return channel.writeAndFlush(req);
         } catch (UnsupportedEncodingException e) {
-            logger.error(e.getMessage(), e);
-        } catch (URISyntaxException e) {
             logger.error(e.getMessage(), e);
         } catch (Exception e) {
             e.printStackTrace();

@@ -1,6 +1,7 @@
 package com.shinetech.rte.netty.client;
 
 import com.alibaba.fastjson.JSON;
+import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.shinetech.proxy.netty.message.Message;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -16,8 +17,6 @@ import org.slf4j.LoggerFactory;
  */
 
 public class RteClientHandler extends ChannelInboundHandlerAdapter {
-
-
     private static final Logger logger = LoggerFactory.getLogger(RteClientHandler.class);
 
     private RteClient client;
@@ -30,7 +29,6 @@ public class RteClientHandler extends ChannelInboundHandlerAdapter {
         this.host = host;
         this.port = port;
         this.client = client;
-
     }
 
 
@@ -72,9 +70,7 @@ public class RteClientHandler extends ChannelInboundHandlerAdapter {
      */
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-
-
-        logger.debug("localClient Read:" + msg);
+        logger.debug("RteClient Read.");
 
         try {
             if (msg instanceof FullHttpResponse){
@@ -82,17 +78,14 @@ public class RteClientHandler extends ChannelInboundHandlerAdapter {
                 String jsonStr = fullHttpResponse.content().toString(HttpConstants.DEFAULT_CHARSET);
                 Message message = JSON.parseObject(jsonStr, Message.class);
 
+                client.responseCache.putResult(message.getHeader().getMsgNo(), message);
 
             } else {
                 throw new Exception();
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 
 

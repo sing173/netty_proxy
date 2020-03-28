@@ -9,6 +9,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.handler.codec.http.*;
+import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultEventExecutorGroup;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,9 +78,8 @@ public class LocalClient {
     /**
      * 连接到服务端
      * @return
-     * @throws Exception
      */
-    public LocalClient start() throws Exception {
+    public LocalClient start() {
 
         workerGroup = new NioEventLoopGroup(clientThread);
 
@@ -96,7 +96,7 @@ public class LocalClient {
                 _channel.pipeline().addLast(new HttpClientCodec());
                 _channel.pipeline().addLast(new HttpObjectAggregator(1024*1024));
 
-                // 业务事件处理（业务线程）, requestDispatcher进行请求的分发处理
+                // 业务事件处理（为了不阻塞io线程，使用业务线程
                 _channel.pipeline().addLast(new DefaultEventExecutorGroup(10),
                         new LocalClientHandler(LocalClient.this));
             }

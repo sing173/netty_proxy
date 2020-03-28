@@ -22,7 +22,7 @@ public class RteClientStart {
 
     public static RteClient buildClient(String host, int port, int clientThread, int heartIntervalMs, RteClientResponseCache cache) {
 
-        RteClient client = RteClient.build(host, port, clientThread, heartIntervalMs);
+        RteClient client = RteClient.build(host, port, clientThread, heartIntervalMs, cache);
 
         try {
             client.start();
@@ -46,7 +46,7 @@ public class RteClientStart {
 
 
 
-        String serialKey = starter.requestKey(); // 生成随机的序列
+        String serialKey = starter.requestKey();
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("serialKey",serialKey);
 
@@ -59,7 +59,7 @@ public class RteClientStart {
         ChannelFuture future = client.sendData(new Message(), Constant.DECISION_REQUEST);
         System.out.println(future);
 
-        String response = responseCache.getResult(serialKey, 10000);
+        Object response = responseCache.getResult(serialKey, 10000);
 
 
         System.out.println(response);

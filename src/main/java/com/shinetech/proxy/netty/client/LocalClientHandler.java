@@ -55,7 +55,10 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
         return processor.rteClientPool.get(processor.keys.get(index));
     }
 
-
+    /**
+     * 软负载获取rte客户端
+     * @return
+     */
     private AtomicInteger getRoundRobinValue() {
         if (this.roundRobin.getAndIncrement() > MAX_VALUE) {
             this.roundRobin.set(MIN_VALUE);
@@ -73,7 +76,8 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
         logger.error("disconnect server:" + ctx.channel() + "try connect again....................");
-        client.doConnect();  //重新连接服务器
+        //重新连接服务器
+        client.doConnect();
     }
 
     /**
@@ -109,8 +113,17 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
                 String jsonStr = fullHttpResponse.content().toString(HttpConstants.DEFAULT_CHARSET);
                 Message message = JSON.parseObject(jsonStr, Message.class);
 
+                //生成消息序列号，创建缓存，等待异步回调后通过序列号拿结果
+                String msgNo = RandomStringUtils.randomAlphabetic(10);
+                message.getHeader().setMsgNo(msgNo);
+                responseCache.createStub(msgNo);
+                //决策请求
                 if (Constant.DECISION_REQUEST.equals(message.getHeader().getPath())) {
-                    getDecisionResponseSync(ctx, message);
+                    getDecisionResponseSync(ctx, message, msgNo);
+
+                }
+                //规则发布
+                else if(Constant.RULE_CONFIG_REQUEST.equals(message.getHeader().getPath())) {
 
 
                 }
@@ -132,32 +145,26 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
      * @param ctx
      * @param message
      */
-    private void getDecisionResponseSync(ChannelHandlerContext ctx, Message message) {
+    private void getDecisionResponseSync(ChannelHandlerContext ctx, Message message, String msgNo) {
         try {
-            // 生成随机的序列
-            String serialKey = RandomStringUtils.randomAlphabetic(10);
-            message.getHeader().setMsgNo(serialKey);
-            responseCache.createStub(serialKey);
-
-            logger.debug("localClient Send:" + message);
-
+            logger.debug(ctx.channel().id().asShortText() + " localClient Send:" + message);
+            //随机获取rte客户端
             RteClient rteClient = getClient();
             rteClient.sendData(message, Constant.DECISION_REQUEST);
 
             //阻塞等待返回....
-            String result = responseCache.getResult(serialKey, 100);
-            Message resultMsg = new Message(new MessageHeader(), new DecisionMessageBody());
-            resultMsg.getHeader().setPath(Constant.DECISION_RESPONSE);
-            resultMsg.getHeader().setRequestChannelId(message.getHeader().getRequestChannelId());
-//            Message messageResponse = JSON.parseObject(result, Message.class);
+            Message result = (Message) responseCache.getResult(msgNo, 100);
+            logger.debug("getDecisionResponseSync :" + result);
+            //TODO 解析结果
+            if(result != null) {
+                result.getHeader().setPath(Constant.DECISION_RESPONSE);
+                ctx.writeAndFlush(HttpUtils.request(result, Constant.DECISION_RESPONSE));
+            } else {
+                ctx.writeAndFlush(HttpUtils.request(message, Constant.DECISION_RESPONSE));
 
-            ctx.writeAndFlush(HttpUtils.request(resultMsg, Constant.DECISION_RESPONSE));
-
+            }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
-        } catch (URISyntaxException e) {
-            e.printStackTrace();
-
         }
     }
 
