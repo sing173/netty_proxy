@@ -34,6 +34,7 @@ public class DecisionRequestProcessor implements IProcessor {
 
         try {
             Message message = HttpRequestDispatcher.buildMessage((FullHttpRequest) msg, ctx, DecisionMessageBody.class);
+            logger.debug("send decision msg:" + message);
 
             Channel client = ChannelSupervise.getClient();
             if (client == null){

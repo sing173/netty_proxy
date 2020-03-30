@@ -68,7 +68,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
-        logger.debug("connect server:" + ctx.channel());
+        logger.debug("connect LOCAL server:" + ctx.channel());
         super.channelActive(ctx);
         //本地客户端连接成功后才初始化rte客户端
         this.rteClientZkWatcher = new RteClientZkWatcher(this.responseCache);
@@ -77,7 +77,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
-        logger.error("disconnect server:" + ctx.channel() + "try connect again....................");
+        logger.error("disconnect LOCAL server:" + ctx.channel() + "try connect again....................");
         //断掉所有rte客户端，因为会重新连接
         rteClientZkWatcher.disConnectAllRteClient();
 
