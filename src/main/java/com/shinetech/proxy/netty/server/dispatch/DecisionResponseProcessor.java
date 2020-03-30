@@ -1,9 +1,11 @@
 package com.shinetech.proxy.netty.server.dispatch;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
 import com.shinetech.proxy.netty.common.Constant;
 import com.shinetech.proxy.netty.common.HttpUtils;
 import com.shinetech.proxy.netty.common.IProcessor;
+import com.shinetech.proxy.netty.message.DecisionMessageBody;
 import com.shinetech.proxy.netty.server.ChannelSupervise;
 import com.shinetech.proxy.netty.message.Message;
 import io.netty.channel.Channel;
@@ -31,7 +33,7 @@ public class DecisionResponseProcessor implements IProcessor {
     public Message process(Object msg, ChannelHandlerContext ctx) {
         FullHttpRequest request = (FullHttpRequest) msg;
         String jsonStr = request.content().toString(HttpConstants.DEFAULT_CHARSET);
-        Message message = JSON.parseObject(jsonStr, Message.class);
+        Message message = JSON.parseObject(jsonStr, new TypeReference<Message<DecisionMessageBody>>(){});
 
         logger.debug("DecisionProcessor Response:" + message.getOutTime());
 

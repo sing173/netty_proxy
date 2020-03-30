@@ -25,7 +25,7 @@ public class RteClient {
     private static final Logger logger = LoggerFactory.getLogger(RteClient.class);
 
     private Bootstrap bootstrap;
-    private Channel channel;
+    public Channel channel;
     private EventLoopGroup workerGroup;
 
     private int clientThread = 20;
@@ -99,10 +99,10 @@ public class RteClient {
             public void operationComplete(ChannelFuture futureListener) throws Exception {
                 if (futureListener.isSuccess()) {
                     channel = futureListener.channel();
-                    logger.info("connect rte server success..........");
+                    logger.info("connect RTE server success..........");
                     logger.info("netty client connection establish, host: {}, port: {}", host, port);
                 } else {
-                    logger.error("connect rte server fail..........");
+                    logger.error("connect RTE server fail..........");
 
                     //一次性操作
                     futureListener.channel().eventLoop().schedule(new Runnable() {

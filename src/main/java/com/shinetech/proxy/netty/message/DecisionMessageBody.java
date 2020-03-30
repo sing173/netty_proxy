@@ -8,7 +8,7 @@ import java.util.Map;
 public class DecisionMessageBody implements IMessageBody {
 
     private String dsType;
-    private Map<String, Object> eventVars;
+    private Map<String, Object> data;
 
     public DecisionMessageBody(){
 
@@ -23,11 +23,11 @@ public class DecisionMessageBody implements IMessageBody {
         this.dsType = dsType;
     }
 
-    public Map<String, Object> getEventVars() {
-        return eventVars;
+    public Map<String, Object> getData() {
+        return data;
     }
 
-    public void setEventVars(Map<String, Object> eventVars) {
-        this.eventVars = eventVars;
+    public void setData(Map<String, Object> data) {
+        this.data = data;
     }
 }

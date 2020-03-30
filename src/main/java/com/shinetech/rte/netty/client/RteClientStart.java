@@ -26,9 +26,9 @@ public class RteClientStart {
 
         try {
             client.start();
-            logger.info("Connect Server success, host:" + host + ",port:" + port);
+            logger.info("Connect RTE Server success, host:" + host + ",port:" + port);
         } catch (Exception e) {
-            logger.error("Connect Server fail : " + e.getMessage());
+            logger.error("Connect RTE Server fail : " + e.getMessage());
         }
 
 

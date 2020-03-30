@@ -8,6 +8,7 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import io.netty.handler.codec.http.HttpRequest;
+import io.netty.util.ReferenceCountUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,35 +47,38 @@ public class HttpRequestHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
         logger.debug("HttpRequestHandler channelRead");
-        if (msg instanceof HttpRequest){
-            HttpRequest request = (HttpRequest) msg;
-            HttpHeaders headers = request.headers();
-            String uri = request.uri();
+        try {
+            if (msg instanceof HttpRequest){
+                HttpRequest request = (HttpRequest) msg;
+                HttpHeaders headers = request.headers();
+                String uri = request.uri();
 
-            logger.info("http request uri: "+ uri);
-            if (uri.equals(FAVICON_ICO)){
-                return;
-            }
+                logger.info("http request uri: "+ uri);
+                if (uri.equals(FAVICON_ICO)){
+                    return;
+                }
 
-            HttpMethod method = request.method();
-            if (method.equals(HttpMethod.POST)){
-                String contentType = getContentType(headers);
-                //只处理json的请求
-                if("application/json".equals(contentType)){
-                    //为了区分上游客户端和本地客户端，本地客户端链接服务端后会发一条注册信息过来，服务端保存channel
-                    if(Constant.LOCAL_CLIENT_CONNENT.equals(uri)) {
-                        logger.debug("new local client connect："+ctx.channel());
-                        ChannelSupervise.addLocalChannel(ctx.channel());
-                        //删除channelActive加入的连接，避免重复
-                        ChannelSupervise.ChannelMap.remove(ctx.channel().id().asShortText());
-                    } else {
-                        //其它请求通过分发器处理
-                        dispatcher.dispatch(request, ctx);
+                HttpMethod method = request.method();
+                if (method.equals(HttpMethod.POST)){
+                    String contentType = getContentType(headers);
+                    //只处理json的请求
+                    if("application/json".equals(contentType)){
+                        //为了区分上游客户端和本地客户端，本地客户端链接服务端后会发一条注册信息过来，服务端保存channel
+                        if(Constant.LOCAL_CLIENT_CONNENT.equals(uri)) {
+                            logger.debug("new local client connect："+ctx.channel());
+                            ChannelSupervise.addLocalChannel(ctx.channel());
+                            //删除channelActive加入的连接，避免重复
+                            ChannelSupervise.ChannelMap.remove(ctx.channel().id().asShortText());
+                        } else {
+                            //其它请求通过分发器处理
+                            dispatcher.dispatch(request, ctx);
+                        }
                     }
                 }
             }
+        } finally {
+            ReferenceCountUtil.release(msg);
         }
-
     }
 
     private String getContentType(HttpHeaders headers){
