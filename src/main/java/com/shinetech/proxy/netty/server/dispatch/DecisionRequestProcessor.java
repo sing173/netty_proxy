@@ -7,11 +7,14 @@ import com.shinetech.proxy.netty.server.ChannelSupervise;
 import com.shinetech.proxy.netty.message.DecisionMessageBody;
 import com.shinetech.proxy.netty.message.Message;
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.http.FullHttpRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.TimeUnit;
 
 /**
  * 决策事件处理者,下发决策事件到本地客户端
@@ -39,7 +42,7 @@ public class DecisionRequestProcessor implements IProcessor {
             }
             logger.debug("send decision event to client:" + client.id().asShortText());
 
-            client.writeAndFlush(HttpUtils.response(message))
+            ChannelFuture channelFuture = client.writeAndFlush(HttpUtils.response(message))
                     .addListener((ChannelFutureListener) future -> {
                         if (future.isSuccess()) {
                             logger.debug("send decision event success!");
@@ -47,6 +50,8 @@ public class DecisionRequestProcessor implements IProcessor {
                             logger.error("send decision event Error!", future.cause());
                         }
                     });
+
+
             return message;
         } catch (Exception e) {
             e.printStackTrace();

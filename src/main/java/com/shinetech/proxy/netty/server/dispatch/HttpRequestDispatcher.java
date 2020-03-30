@@ -61,7 +61,9 @@ public class HttpRequestDispatcher {
         //记录请求路径和发起客户端
         MessageHeader messageHeader = new MessageHeader(request.uri(), ctx.channel().id().asShortText());
         //组装统一消息
-        return new Message<>(messageHeader, JSON.parseObject(jsonStr, bodyClass));
+        Message message = new Message<>(messageHeader, JSON.parseObject(jsonStr, bodyClass));
+        message.setInTime(System.currentTimeMillis());
+        return message;
     }
 
 

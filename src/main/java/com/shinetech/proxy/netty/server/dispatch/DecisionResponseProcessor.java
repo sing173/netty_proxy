@@ -31,19 +31,27 @@ public class DecisionResponseProcessor implements IProcessor {
 
     @Override
     public Message process(Object msg, ChannelHandlerContext ctx) {
+        logger.debug("DecisionProcessor Response in!");
         FullHttpRequest request = (FullHttpRequest) msg;
         String jsonStr = request.content().toString(HttpConstants.DEFAULT_CHARSET);
         Message message = JSON.parseObject(jsonStr, new TypeReference<Message<DecisionMessageBody>>(){});
+        logger.debug("DecisionProcessor Response msg:" + message);
 
-        logger.debug("DecisionProcessor Response:" + message.getOutTime());
+        if(message.getHeader() != null) {
+            Channel channel = ChannelSupervise.findChannel(message.getHeader().getRequestChannelId());
+            message.setOutTime(System.currentTimeMillis());
+            message.setCostTime(message.getOutTime() - message.getInTime());
 
-        Channel channel = ChannelSupervise.findChannel(message.getHeader().getRequestChannelId());
+            if(channel != null){
+                channel.writeAndFlush(HttpUtils.response(message)).addListener(ChannelFutureListener.CLOSE);
+            } else {
 
-        if(channel != null){
-            channel.writeAndFlush(HttpUtils.response(message)).addListener(ChannelFutureListener.CLOSE);
+            }
         } else {
 
+//            channel.writeAndFlush(HttpUtils.response(message)).addListener(ChannelFutureListener.CLOSE);
         }
+
 
         return null;
     }

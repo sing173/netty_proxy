@@ -23,6 +23,7 @@ public class Message<T extends IMessageBody> implements Serializable {
 
     private long inTime;
     private long outTime;
+    private long costTime;
 
     public Message() {
         //心跳的创建方式
@@ -75,5 +76,13 @@ public class Message<T extends IMessageBody> implements Serializable {
 
     public void setOutTime(long outTime) {
         this.outTime = outTime;
+    }
+
+    public long getCostTime() {
+        return costTime;
+    }
+
+    public void setCostTime(long costTime) {
+        this.costTime = costTime;
     }
 }

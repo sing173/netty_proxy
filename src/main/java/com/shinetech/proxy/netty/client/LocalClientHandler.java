@@ -7,7 +7,6 @@ import com.shinetech.proxy.netty.common.HttpUtils;
 import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.shinetech.proxy.netty.message.DecisionMessageBody;
 import com.shinetech.proxy.netty.message.Message;
-import com.shinetech.proxy.netty.message.MessageHeader;
 import com.shinetech.proxy.netty.message.RuleConfigMessageBody;
 import com.shinetech.rte.netty.client.RteClient;
 import io.netty.channel.ChannelHandlerContext;
@@ -21,8 +20,6 @@ import org.apache.commons.lang3.RandomStringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 
@@ -39,23 +36,22 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
 
     private LocalClient client;
     private RteClientResponseCache responseCache;
-    private LocalClientZkWatcher processor;
+    private RteClientZkWatcher rteClientZkWatcher;
 
 
     public LocalClientHandler(LocalClient client) {
         this.client = client;
         this.responseCache = RteClientResponseCache.newBuild();
-        this.processor = new LocalClientZkWatcher(this.responseCache);
 
     }
 
     public RteClient getClient() {
-        if (processor.keys == null || processor.keys.size() == 0) {
+        if (rteClientZkWatcher.keys == null || rteClientZkWatcher.keys.size() == 0) {
             return null;
         }
-        int index = this.getRoundRobinValue().get() % processor.keys.size();
+        int index = this.getRoundRobinValue().get() % rteClientZkWatcher.keys.size();
         logger.info("from the client pool get index :" + index);
-        return processor.rteClientPool.get(processor.keys.get(index));
+        return rteClientZkWatcher.rteClientPool.get(rteClientZkWatcher.keys.get(index));
     }
 
     /**
@@ -74,12 +70,17 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         logger.debug("connect server:" + ctx.channel());
         super.channelActive(ctx);
+        //本地客户端连接成功后才初始化rte客户端
+        this.rteClientZkWatcher = new RteClientZkWatcher(this.responseCache);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         super.channelInactive(ctx);
         logger.error("disconnect server:" + ctx.channel() + "try connect again....................");
+        //断掉所有rte客户端，因为会重新连接
+        rteClientZkWatcher.disConnectAllRteClient();
+
         //重新连接服务器
         client.doConnect();
     }
@@ -109,14 +110,20 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        logger.debug("localClient Read:" + msg);
+        logger.debug("localClient read:" + msg);
 
         try {
             if (msg instanceof FullHttpResponse) {
                 FullHttpResponse fullHttpResponse = (FullHttpResponse) msg;
                 String jsonStr = fullHttpResponse.content().toString(HttpConstants.DEFAULT_CHARSET);
+                logger.debug("localClient read json:" + jsonStr);
                 //只反序列号header和基础属性
                 Message message = JSON.parseObject(jsonStr, Message.class);
+                if(message == null) {
+                    logger.error("localClient read msg is null!!!!");
+                    ctx.writeAndFlush(HttpUtils.request(new Message(), Constant.DECISION_RESPONSE));
+                    return;
+                }
 
                 //生成消息序列号，创建缓存，等待异步回调后通过序列号拿对应缓存，得到结果
                 String msgNo = RandomStringUtils.randomAlphabetic(10);

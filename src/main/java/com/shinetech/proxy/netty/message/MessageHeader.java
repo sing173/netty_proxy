@@ -19,13 +19,11 @@ public class MessageHeader implements Serializable{
 
     public MessageHeader(String path) {
         this.path = path;
-        this.msgNo = UUID.randomUUID().toString();
 
     }
 
     public MessageHeader(String path, String requestChannelId) {
         this.path = path;
-        this.msgNo = UUID.randomUUID().toString();
         this.requestChannelId = requestChannelId;
     }
 

@@ -5,6 +5,8 @@ import com.shinetech.proxy.netty.common.Constant;
 import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.shinetech.rte.netty.client.RteClient;
 import com.shinetech.rte.netty.client.RteClientStart;
+import io.netty.channel.ChannelFuture;
+import io.netty.channel.ChannelFutureListener;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
 import org.slf4j.Logger;
@@ -22,9 +24,9 @@ import java.util.concurrent.ConcurrentMap;
  * @author luomingxing
  * @date 2020/3/26
  */
-public class LocalClientZkWatcher implements Watcher {
+public class RteClientZkWatcher implements Watcher {
 
-    private static final Logger logger = LoggerFactory.getLogger(LocalClientZkWatcher.class);
+    private static final Logger logger = LoggerFactory.getLogger(RteClientZkWatcher.class);
 
     /**
      * 链接决策引擎的客户端集合
@@ -34,9 +36,9 @@ public class LocalClientZkWatcher implements Watcher {
     private RteClientResponseCache responseCache;
     private String zkAddress;
     private ZKClient zkClient;
+    private Boolean disconnect = false;
 
-
-    public LocalClientZkWatcher(RteClientResponseCache responseCache) {
+    public RteClientZkWatcher(RteClientResponseCache responseCache) {
         try {
 //            Properties properties = PropertyUtils.getInstance();
 //            this.zkAddress = (String) properties.get(Constant.ZOOKEEPER_ADDRESS);
@@ -51,15 +53,16 @@ public class LocalClientZkWatcher implements Watcher {
             logger.error("Zookeeper init error：" + e.getMessage());
         }
 
-        //启动一个线程，处理zk连接断开的情况
+        //启动一个线程，处理zk连接断开的情况 TODO 用线程池优化
         Runnable sendTask = new Runnable() {
             @Override
             public void run() {
-                for (; ; ) {
+                //客户连接池被情况说明是本地客户端断开连接，不需要再重连rte客户端
+                while (!disconnect) {
                     logger.debug("check zookeeper Client  connection ......");
                     // 如果zk连接不上，重新初始化zk
                     if (!zkClient.isAvailable()) {
-                        if (zkClient.reconnect(LocalClientZkWatcher.this)) {
+                        if (zkClient.reconnect(RteClientZkWatcher.this)) {
                             initClientPool();
                         }
                     }
@@ -117,6 +120,23 @@ public class LocalClientZkWatcher implements Watcher {
         } else {
             logger.error("flink netty server is null in zk: " + zkAddress + " , path: " + Constant.FLINK_NETTY_SERVER);
         }
+    }
+
+    public void disConnectAllRteClient() throws InterruptedException {
+        rteClientPool.values().forEach(rteClient -> {
+//            rteClient.channel.close().addListener(new ChannelFutureListener() {
+//                @Override
+//                public void operationComplete(ChannelFuture channelFuture) throws Exception {
+//                    if(!channelFuture.isSuccess()) {
+//                        logger.error("disConnectAllRteClient error :" + rteClient.channel.id().asShortText());
+//                    }
+//                }
+//            });
+            rteClient.disconnect();
+        });
+        rteClientPool.clear();
+        disconnect = true;
+        zkClient.close();
     }
 
     @Override

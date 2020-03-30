@@ -30,6 +30,7 @@ public class ZKClient {
 
     public boolean reconnect(Watcher watcher) {
         try {
+            logger.debug("----ZKClient reconnect-----");
             zkClient.close();
         } catch (InterruptedException e) {
         }

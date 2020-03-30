@@ -143,4 +143,21 @@ public class RteClient {
 
     }
 
+    /**
+     * 断开连接
+     */
+    public void disconnect() {
+        try {
+            if (!isClosed()) {
+                channel.close().syncUninterruptibly();
+            }
+            workerGroup.shutdownGracefully();
+            workerGroup = null;
+            channel = null;
+        } catch (Exception e) {
+            logger.error(e.getMessage());
+        }
+
+    }
+
 }

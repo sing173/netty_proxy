@@ -123,15 +123,15 @@ public class LocalClient {
             public void operationComplete(ChannelFuture futureListener) throws Exception {
                 if (futureListener.isSuccess()) {
                     channel = futureListener.channel();
-                    logger.info("connect local server success.........."+channel);
+                    logger.info("connect LOCAL server success.........."+channel);
                     check();
                     //链接成功后发送一条空消息，服务端根据这个注册本地客户端
                     DefaultFullHttpRequest req = HttpUtils.request(new Message(), Constant.LOCAL_CLIENT_CONNENT);
                     channel.writeAndFlush(req);
-                    logger.info("netty client connection, host: {}, port: {}", host, port);
+                    logger.info("netty LOCAL client connection, host: {}, port: {}", host, port);
 
                 } else {
-                    logger.error("connect local server fail..........");
+                    logger.error("connect LOCAL server fail..........");
 
                     futureListener.channel().eventLoop().schedule(new Runnable() {
                         //一次性操作
