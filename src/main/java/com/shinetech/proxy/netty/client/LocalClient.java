@@ -93,8 +93,10 @@ public class LocalClient {
                 // 当客户端的所有ChannelHandler中 15s内没有read and write事件，则会触发userEventTriggered方法
 //                _channel.pipeline().addLast("idleHandler", new IdleStateHandler(0, heartIntervalMs, 0, TimeUnit.MILLISECONDS));
 
-                _channel.pipeline().addLast(new HttpClientCodec());
-                _channel.pipeline().addLast(new HttpObjectAggregator(1024*1024));
+                _channel.pipeline().addLast(new HttpResponseDecoder());
+                _channel.pipeline().addLast(new HttpRequestEncoder());
+//                _channel.pipeline().addLast(new HttpClientCodec());
+//                _channel.pipeline().addLast(new HttpObjectAggregator(1024*1024));
 
                 // 业务事件处理（为了不阻塞io线程，使用业务线程
                 _channel.pipeline().addLast(new DefaultEventExecutorGroup(10),

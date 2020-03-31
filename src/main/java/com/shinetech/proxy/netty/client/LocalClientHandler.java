@@ -4,15 +4,16 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.shinetech.proxy.netty.common.Constant;
 import com.shinetech.proxy.netty.common.HttpUtils;
+import com.shinetech.proxy.netty.common.buffer.ByteBufToBytes;
 import com.shinetech.proxy.netty.common.buffer.RteClientResponseCache;
 import com.shinetech.proxy.netty.message.DecisionMessageBody;
 import com.shinetech.proxy.netty.message.Message;
 import com.shinetech.proxy.netty.message.RuleConfigMessageBody;
 import com.shinetech.rte.netty.client.RteClient;
+import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
-import io.netty.handler.codec.http.FullHttpResponse;
-import io.netty.handler.codec.http.HttpConstants;
+import io.netty.handler.codec.http.*;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 import io.netty.util.ReferenceCountUtil;
@@ -37,7 +38,7 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
     private LocalClient client;
     private RteClientResponseCache responseCache;
     private RteClientZkWatcher rteClientZkWatcher;
-
+    private ByteBufToBytes reader;
 
     public LocalClientHandler(LocalClient client) {
         this.client = client;
@@ -113,54 +114,76 @@ public class LocalClientHandler extends ChannelInboundHandlerAdapter {
         logger.debug("localClient read:" + msg);
 
         try {
-            if (msg instanceof FullHttpResponse) {
-                FullHttpResponse fullHttpResponse = (FullHttpResponse) msg;
-                String jsonStr = fullHttpResponse.content().toString(HttpConstants.DEFAULT_CHARSET);
-                logger.debug("localClient read json:" + jsonStr);
-                //只反序列号header和基础属性
-                Message message = JSON.parseObject(jsonStr, Message.class);
-                if(message == null) {
-                    logger.error("localClient read msg is null!!!!");
-                    ctx.writeAndFlush(HttpUtils.request(new Message(), Constant.DECISION_RESPONSE));
-                    return;
-                }
+            if(msg instanceof HttpResponse) {
+                HttpResponse response = (HttpResponse) msg;
 
-                //生成消息序列号，创建缓存，等待异步回调后通过序列号拿对应缓存，得到结果
-                String msgNo = RandomStringUtils.randomAlphabetic(10);
-                responseCache.createStub(msgNo);
-                //根据请求路径解析body，决策请求
-                if (Constant.DECISION_REQUEST.equals(message.getHeader().getPath())) {
-                    message = JSON.parseObject(jsonStr, new TypeReference<Message<DecisionMessageBody>>() {});
-                }
-                //规则发布
-                else if (Constant.RULE_CONFIG_REQUEST.equals(message.getHeader().getPath())) {
-                    message = JSON.parseObject(jsonStr, new TypeReference<Message<RuleConfigMessageBody>>() {});
-                }
-                message.getHeader().setMsgNo(msgNo);
-
-                //随机获取rte客户端
-                RteClient rteClient = getClient();
-                logger.debug(rteClient.channel.id().asShortText() + " RTE Client Send:" + message);
-                //通过rte客户端发送数据到引擎
-                rteClient.sendData(message, Constant.DECISION_REQUEST);
-
-                //阻塞等待返回....
-                Message result = (Message) responseCache.getResult(message.getHeader().getMsgNo(), 100);
-                logger.debug("get RTE response sync :" + result);
-                //TODO 解析结果
-                if (result != null) {
-                    result.getHeader().setPath(Constant.DECISION_RESPONSE);
-
-
-                    ctx.writeAndFlush(HttpUtils.request(result, Constant.DECISION_RESPONSE));
+                if(HttpUtil.isContentLengthSet(response)) {
+                    reader = new ByteBufToBytes((int) HttpUtil.getContentLength(response));
                 } else {
-                    //TODO  超时处理
-                    ctx.writeAndFlush(HttpUtils.request(message, Constant.DECISION_RESPONSE));
-
+                    logger.error("localClient read content is null!");
                 }
 
-            } else {
-                throw new Exception();
+            }
+
+            if(msg instanceof HttpContent) {
+//            if (msg instanceof FullHttpResponse) {
+//                FullHttpResponse fullHttpResponse = (FullHttpResponse) msg;
+//                String jsonStr = fullHttpResponse.content().toString(HttpConstants.DEFAULT_CHARSET);
+
+                if(reader != null) {
+                    HttpContent httpContent = (HttpContent) msg;
+                    ByteBuf content = httpContent.content();
+                    reader.reading(content);
+//                    content.release();
+
+                    if(reader.isEnd()) {
+                        String jsonStr = new String(reader.readFull());
+                        logger.debug("localClient read json:" + jsonStr);
+                        //只反序列号header和基础属性
+                        Message message = JSON.parseObject(jsonStr, Message.class);
+                        if (message == null) {
+                            logger.error("localClient read msg is null!!!!");
+                            ctx.writeAndFlush(HttpUtils.request(new Message(), Constant.DECISION_RESPONSE));
+                            return;
+                        }
+
+                        //生成消息序列号，创建缓存，等待异步回调后通过序列号拿对应缓存，得到结果
+                        String msgNo = RandomStringUtils.randomAlphabetic(10);
+                        responseCache.createStub(msgNo);
+                        //根据请求路径解析body，决策请求
+                        if (Constant.DECISION_REQUEST.equals(message.getHeader().getPath())) {
+                            message = JSON.parseObject(jsonStr, new TypeReference<Message<DecisionMessageBody>>() {
+                            });
+                        }
+                        //规则发布
+                        else if (Constant.RULE_CONFIG_REQUEST.equals(message.getHeader().getPath())) {
+                            message = JSON.parseObject(jsonStr, new TypeReference<Message<RuleConfigMessageBody>>() {
+                            });
+                        }
+                        message.getHeader().setMsgNo(msgNo);
+
+                        //随机获取rte客户端
+                        RteClient rteClient = getClient();
+                        logger.debug(rteClient.channel.id().asShortText() + " RTE Client Send:" + message);
+                        //通过rte客户端发送数据到引擎
+                        rteClient.sendData(message, Constant.DECISION_REQUEST);
+
+                        //阻塞等待返回....
+                        Message result = (Message) responseCache.getResult(message.getHeader().getMsgNo(), 100);
+                        logger.debug("get RTE response sync :" + result);
+                        //TODO 解析结果
+                        if (result != null) {
+                            result.getHeader().setPath(Constant.DECISION_RESPONSE);
+
+
+                            ctx.writeAndFlush(HttpUtils.request(result, Constant.DECISION_RESPONSE));
+                        } else {
+                            //TODO  超时处理
+                            ctx.writeAndFlush(HttpUtils.request(message, Constant.DECISION_RESPONSE));
+
+                        }
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
